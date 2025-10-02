@@ -1,1 +1,1 @@
-print("Deleted Contents For Test")
+print('Pick which type of Cache Simulator you want to use.')
