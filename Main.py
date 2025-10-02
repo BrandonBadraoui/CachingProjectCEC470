@@ -1,1 +1,1 @@
-print("Deleted Contents For Test")
+print("Pick a Caching Strategy:")
