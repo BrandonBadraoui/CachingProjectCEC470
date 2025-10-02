@@ -1,3 +1,1 @@
-print("Deleted Contents For Test")
-
-print("Sus")
+print("Deleting all files")
