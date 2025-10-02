@@ -1,1 +1,1 @@
-print("Deleting all files")
+print("Deleted Contents For Test")
