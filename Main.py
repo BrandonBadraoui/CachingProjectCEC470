@@ -1,1 +1,0 @@
-print("Pick a Caching Strategy:")
