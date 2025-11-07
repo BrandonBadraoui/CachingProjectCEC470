@@ -14,8 +14,6 @@ class Memory:
 
     def write_block(self, block_num, block_data):
         # Writes an entire block of data back to memory.
-        # block_num: which block in memory to write to
-        # block_data: list of bytes to write into memory
         start = block_num * len(block_data)        # Find the start index of the block
         for i in range(len(block_data)):           # Copy each byte into memory
             self.data[start + i] = block_data[i]
