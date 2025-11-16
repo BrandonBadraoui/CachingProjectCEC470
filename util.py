@@ -1,7 +1,11 @@
 def parse_args():
     import sys
     if len(sys.argv) != 7:
-        print("Usage: simulator.py MEM_EXP CACHE_EXP BLOCK_EXP MAP_POLICY REPL_POLICY WRITE_POLICY")
+        print("All EXP are 2^X, thus 10 = 2^10 Bytes")
+        print("\nMap Policy: direct , full , set:N")
+        print("\nReply Policy: RAND , LRU , FIFO , LFU")
+        print("\nWrite Policy: WT , WB")
+        print("\nUsage: simulator.py MEM_EXP CACHE_EXP BLOCK_EXP MAP_POLICY REPL_POLICY WRITE_POLICY")
         sys.exit(1)
     mem_size = 2 ** int(sys.argv[1])
     cache_size = 2 ** int(sys.argv[2])
