@@ -1,38 +1,49 @@
 from cache import Cache
 from mainMem import Memory
-from util import parse_args, print_stats
+from util import print_stats
 
-def main():
-    mem_size, cache_size, block_size, mapping, replacement, write = parse_args()
+# ---------------------------------------------------------
+# Predefined test cases for automated demos
+# ---------------------------------------------------------
+TEST_SEQUENCE = [
+    ("read", 10),
+    ("read", 14),
+    ("read", 10),
+    ("write", 18, 7),
+    ("read", 18),
+    ("read", 50),
+    ("read", 58),
+    ("write", 90, 33),
+    ("read", 90),
+    ("read", 10),
+]
+
+# ---------------------------------------------------------
+# Helper to run a full simulation with fixed settings
+# ---------------------------------------------------------
+def run_demo(name, mem_size, cache_size, block_size, mapping, replacement, write):
+    print(f"\n=== Running Demo: {name} ===")
+    print("Configuration:")
+    print(f"  Memory size:   {mem_size}")
+    print(f"  Cache size:    {cache_size}")
+    print(f"  Block size:    {block_size}")
+    print(f"  Mapping:       {mapping}")
+    print(f"  Replacement:   {replacement}")
+    print(f"  Write policy:  {write}")
+    print("============================\n")
+
     memory = Memory(mem_size)
-
-    # Compute associativity based on mapping policy:
-    # - "direct"  -> 1-way (direct mapped)
-    # - "full"    -> fully associative (all lines in one set)
-    # - "set:N"   -> N-way set associative
     num_lines = cache_size // block_size
 
+    # Determine associativity
     if mapping == "direct":
         associativity = 1
     elif mapping == "full":
         associativity = num_lines
     elif mapping.startswith("set:"):
-        try:
-            associativity = int(mapping.split(":", 1)[1])
-        except ValueError:
-            raise ValueError(f"Invalid set-associative mapping '{mapping}'. Use format 'set:N', e.g., 'set:4'.")
+        associativity = int(mapping.split(":")[1])
     else:
-        raise ValueError(
-            f"Unknown mapping policy '{mapping}'. "
-            "Use 'direct', 'full', or 'set:N' (e.g., 'set:4')."
-        )
-
-    # Basic sanity check: cache must divide cleanly into sets
-    if num_lines % associativity != 0 or associativity <= 0:
-        raise ValueError(
-            f"Invalid associativity {associativity} for cache_size={cache_size}, block_size={block_size}. "
-            f"Total lines={num_lines} must be divisible by associativity."
-        )
+        raise ValueError("Invalid mapping.")
 
     cache = Cache(
         cache_size,
@@ -42,63 +53,82 @@ def main():
         write_policy=write,
     )
 
-    # Print configuration summary
-    print("=== Configuration ===")
-    print(f"Memory size: {mem_size} bytes")
-    print(f"Cache size:  {cache_size} bytes")
-    print(f"Block size:  {block_size} bytes")
-    print(f"Mapping:     {mapping}  (associativity = {associativity}-way, sets = {cache.num_sets})")
-    print(f"Replacement: {replacement}")
-    print(f"Write policy:{write}")
-    print("=====================")
-
-    print("CPU Cache Simulator Ready. Type 'help' for commands.")
-
-    while True:
-        try:
-            cmd = input("> ").split()
-        except KeyboardInterrupt:
-            print("\nExiting simulator.")
-            break
-
-        if not cmd:
-            continue
-
-        if cmd[0] == "read":
-            if len(cmd) != 2:
-                print("Usage: read <addr>")
-                continue
-            try:
-                addr = int(cmd[1])
-            except ValueError:
-                print("Address must be an integer.")
-                continue
+    # Run test sequence
+    for step in TEST_SEQUENCE:
+        if step[0] == "read":
+            addr = step[1]
             val = cache.read(addr, memory)
-            print(f"Read value: {val}")
-
-        elif cmd[0] == "write":
-            if len(cmd) != 3:
-                print("Usage: write <addr> <val>")
-                continue
-            try:
-                addr = int(cmd[1])
-                value = int(cmd[2])
-            except ValueError:
-                print("Address and value must be integers.")
-                continue
+            print(f"READ  addr={addr:3d}  → value={val},   hits={cache.hits}, misses={cache.misses}")
+        elif step[0] == "write":
+            addr, value = step[1], step[2]
             cache.write(addr, value, memory)
+            print(f"WRITE addr={addr:3d}, value={value}   hits={cache.hits}, misses={cache.misses}")
 
-        elif cmd[0] == "stats":
-            print_stats(cache.hits, cache.misses)
+    print("\n=== FINAL RESULTS ===")
+    print_stats(cache.hits, cache.misses)
+    print("=====================\n")
 
-        elif cmd[0] == "quit":
+
+# ---------------------------------------------------------
+# Menu-driven main
+# ---------------------------------------------------------
+def main():
+    while True:
+        print("\nSelect a demo to run:\n")
+        print("1. LRU  | Direct-Mapped | Write-Back")
+        print("2. FIFO | Fully-Assoc   | Write-Back")
+        print("3. LRU  | 2-Way Set     | Write-Through")
+        print("4. Random | Direct | Write-Back")
+        print("5. Quit")
+
+        choice = input("\nEnter choice (1-5): ").strip()
+
+        if choice == "1":
+            run_demo(
+                "LRU Direct-Mapped WB",
+                mem_size=1024,
+                cache_size=64,
+                block_size=8,
+                mapping="direct", # Direct-mapped
+                replacement="LRU", # LRU replacement
+                write="write-back", # Write-back policy
+            )
+        elif choice == "2":
+            run_demo(
+                "FIFO Fully Associative WB",
+                mem_size=1024,
+                cache_size=64,
+                block_size=8,
+                mapping="full", # Fully associative
+                replacement="FIFO", # FIFO replacement
+                write="write-back", # Write-back policy
+            )
+        elif choice == "3":
+            run_demo(
+                "LRU 2-Way Set-Assoc WT",
+                mem_size=1024,
+                cache_size=64,
+                block_size=8,
+                mapping="set:2",
+                replacement="LRU", # LRU replacement
+                write="write-through", # Write-through policy
+            )
+        elif choice == "4":
+            run_demo(
+                "Random Direct WB",
+                mem_size=1024,
+                cache_size=64,
+                block_size=8,
+                mapping="direct", # Direct-mapped
+                replacement="Random", # Random replacement
+                write="write-back", # Write-back policy
+            )
+        elif choice == "5":
+            print("Exiting.")
             break
-
-        elif cmd[0] == "help":
-            print("Commands: read <addr>, write <addr> <val>, stats, quit")
-
         else:
-            print("Unknown command. Type 'help' for a list of commands.")
+            print("Invalid choice. Try again.")
+
 
 if __name__ == "__main__":
     main()

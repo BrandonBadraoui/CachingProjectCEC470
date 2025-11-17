@@ -20,6 +20,5 @@ def print_stats(hits, misses):
     ratio = hits / total if total else 0
     print(f"Hits: {hits}, Misses: {misses}, Hit Ratio: {ratio:.2f}")
 
-
 def hexdump(data):
     return " ".join(f"{b:02X}" for b in data)
