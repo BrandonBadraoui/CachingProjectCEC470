@@ -1,10 +1,19 @@
 from cache import Cache
 from mainMem import Memory
-from util import print_stats
 
-# ---------------------------------------------------------
-# Predefined test cases for automated demos
-# ---------------------------------------------------------
+# =========================================================
+# ANSI COLOR CODES
+# =========================================================
+RED     = "\033[91m"
+GREEN   = "\033[92m"
+YELLOW  = "\033[93m"
+CYAN    = "\033[96m"
+BOLD    = "\033[1m"
+RESET   = "\033[0m"
+
+# =========================================================
+# Predefined Test Sequence (Used by all demos)
+# =========================================================
 TEST_SEQUENCE = [
     ("read", 10),
     ("read", 14),
@@ -18,24 +27,24 @@ TEST_SEQUENCE = [
     ("read", 10),
 ]
 
-# ---------------------------------------------------------
-# Helper to run a full simulation with fixed settings
-# ---------------------------------------------------------
+# =========================================================
+# Helper: Run a single demonstration with given parameters
+# =========================================================
 def run_demo(name, mem_size, cache_size, block_size, mapping, replacement, write):
-    print(f"\n=== Running Demo: {name} ===")
-    print("Configuration:")
+    print(f"\n{BOLD}=== Running Demo: {name} ==={RESET}")
+    print(f"{CYAN}Configuration:{RESET}")
     print(f"  Memory size:   {mem_size}")
     print(f"  Cache size:    {cache_size}")
     print(f"  Block size:    {block_size}")
     print(f"  Mapping:       {mapping}")
     print(f"  Replacement:   {replacement}")
     print(f"  Write policy:  {write}")
-    print("============================\n")
+    print(f"{BOLD}==========================================\n")
 
     memory = Memory(mem_size)
     num_lines = cache_size // block_size
 
-    # Determine associativity
+    # Determine associativity based on mapping
     if mapping == "direct":
         associativity = 1
     elif mapping == "full":
@@ -43,8 +52,9 @@ def run_demo(name, mem_size, cache_size, block_size, mapping, replacement, write
     elif mapping.startswith("set:"):
         associativity = int(mapping.split(":")[1])
     else:
-        raise ValueError("Invalid mapping.")
+        raise ValueError("Invalid mapping policy.")
 
+    # Create cache instance
     cache = Cache(
         cache_size,
         block_size,
@@ -53,35 +63,68 @@ def run_demo(name, mem_size, cache_size, block_size, mapping, replacement, write
         write_policy=write,
     )
 
-    # Run test sequence
+    # Execute test sequence
     for step in TEST_SEQUENCE:
-        if step[0] == "read":
-            addr = step[1]
-            val = cache.read(addr, memory)
-            print(f"READ  addr={addr:3d}  → value={val},   hits={cache.hits}, misses={cache.misses}")
-        elif step[0] == "write":
-            addr, value = step[1], step[2]
-            cache.write(addr, value, memory)
-            print(f"WRITE addr={addr:3d}, value={value}   hits={cache.hits}, misses={cache.misses}")
+        op = step[0]
 
-    print("\n=== FINAL RESULTS ===")
-    print_stats(cache.hits, cache.misses)
+        if op == "read":
+            addr = step[1]
+            before_hits = cache.hits
+
+            val = cache.read(addr, memory)
+
+            # Determine if hit or miss occurred
+            hit = (cache.hits > before_hits)
+
+            color = GREEN if hit else RED
+
+            print(
+                f"{color}READ   addr={addr:3d} → value={val:3d}"
+                f"  (hits={cache.hits}, misses={cache.misses}){RESET}"
+            )
+
+        elif op == "write":
+            addr, value = step[1], step[2]
+
+            print(f"{YELLOW}WRITE  addr={addr:3d},  value={value:3d}{RESET} "
+                  f"", end="")
+
+            before_hits = cache.hits
+
+            cache.write(addr, value, memory)
+
+            # Decide hit/miss color
+            hit = (cache.hits > before_hits)
+            color = GREEN if hit else RED
+
+            print(
+                f" {color}(hits={cache.hits}, misses={cache.misses}){RESET}"
+            )
+
+    # Final results
+    print(f"\n{BOLD}=== FINAL RESULTS ==={RESET}")
+    total = cache.hits + cache.misses
+    ratio = cache.hits / total if total else 0
+
+    print(f"Hits:    {GREEN}{cache.hits}{RESET}")
+    print(f"Misses:  {RED}{cache.misses}{RESET}")
+    print(f"Hit Ratio: {ratio:.2f}")
     print("=====================\n")
 
 
-# ---------------------------------------------------------
-# Menu-driven main
-# ---------------------------------------------------------
+# =========================================================
+# Menu-Driven Main Program
+# =========================================================
 def main():
     while True:
-        print("\nSelect a demo to run:\n")
-        print("1. LRU  | Direct-Mapped | Write-Back")
-        print("2. FIFO | Fully-Assoc   | Write-Back")
-        print("3. LRU  | 2-Way Set     | Write-Through")
-        print("4. Random | Direct | Write-Back")
+        print("\n=== Cache Simulator Demo Menu ===")
+        print("1. LRU  | Direct-Mapped     | WB")
+        print("2. FIFO | Fully Associative | WB")
+        print("3. LRU  | 2-Way Set-Assoc   | WT")
+        print("4. RAND | Direct-Mapped     | WB")
         print("5. Quit")
 
-        choice = input("\nEnter choice (1-5): ").strip()
+        choice = input("\nEnter choice (1–5): ").strip()
 
         if choice == "1":
             run_demo(
@@ -89,46 +132,54 @@ def main():
                 mem_size=1024,
                 cache_size=64,
                 block_size=8,
-                mapping="direct", # Direct-mapped
-                replacement="LRU", # LRU replacement
-                write="write-back", # Write-back policy
+                mapping="direct",
+                replacement="LRU",
+                write="WB",
             )
+
         elif choice == "2":
             run_demo(
                 "FIFO Fully Associative WB",
                 mem_size=1024,
                 cache_size=64,
                 block_size=8,
-                mapping="full", # Fully associative
-                replacement="FIFO", # FIFO replacement
-                write="write-back", # Write-back policy
+                mapping="full",
+                replacement="FIFO",
+                write="WB",
             )
+
         elif choice == "3":
             run_demo(
-                "LRU 2-Way Set-Assoc WT",
+                "LRU 2-Way Set Associative WT",
                 mem_size=1024,
                 cache_size=64,
                 block_size=8,
                 mapping="set:2",
-                replacement="LRU", # LRU replacement
-                write="write-through", # Write-through policy
+                replacement="LRU",
+                write="WT",
             )
+
         elif choice == "4":
             run_demo(
-                "Random Direct WB",
+                "RAND Direct-Mapped WB",
                 mem_size=1024,
                 cache_size=64,
                 block_size=8,
-                mapping="direct", # Direct-mapped
-                replacement="Random", # Random replacement
-                write="write-back", # Write-back policy
+                mapping="direct",
+                replacement="RAND",
+                write="WB",
             )
+
         elif choice == "5":
             print("Exiting.")
             break
+
         else:
-            print("Invalid choice. Try again.")
+            print("Invalid choice. Please enter 1–5.")
 
 
+# =========================================================
+# Entry Point
+# =========================================================
 if __name__ == "__main__":
     main()
