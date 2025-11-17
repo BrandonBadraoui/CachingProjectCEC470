@@ -7,7 +7,7 @@ class Cache:
         self.block_size = block_size            # Size of one block (in bytes)
         self.associativity = associativity      # Number of lines per set (e.g., 1 for direct-mapped, N for N-way)
         self.replacement_policy = replacement_policy  # Policy: RAND, LRU, FIFO, or LFU
-        self.write_policy = write_policy        # Policy: WT (write-through) or WB (write-back)
+        self.write_policy = write_policy        # Policy: WT (write-through) or WB (write-back) or WA (Write Around)
 
 
         self.num_lines = cache_size // block_size       # Total number of cache lines
@@ -71,6 +71,18 @@ class Cache:
             if line.valid and line.tag == tag:
                 # Cache hit
                 self.hits += 1
+
+                if self.write_policy == "WA":
+                    # Write-around (no-write-allocate) — HIT behavior:
+                    # update the cache line and main memory (write-through on hits),
+                    # keep the line valid so subsequent reads hit.
+                    line.data[offset] = value
+                    memory.write_byte(address, value)
+                    line.last_used = time.time()
+                    line.use_count += 1
+                    return
+
+                # For WT/WB, we keep existing behavior
                 line.data[offset] = value    # Write value to cache line
 
                 if self.write_policy == "WT":
@@ -86,6 +98,12 @@ class Cache:
 
         # Cache miss
         self.misses += 1
+
+        if self.write_policy == "WA":
+            # Write-around on miss: just write to memory,
+            # do NOT bring the block into the cache
+            memory.write_byte(address, value)
+            return
 
         if self.write_policy == "WT":
             # For write-through, write directly to memory even on miss
