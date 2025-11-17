@@ -105,6 +105,46 @@ def get_custom_configuration():
             break
         print(RED + "Invalid write policy." + RESET)
 
+    def get_custom_sequence():
+        print(f"\n{BOLD}=== Enter Custom Access Sequence ==={RESET}")
+        print("Enter operations one per line.")
+        print("Examples:")
+        print("  read 10")
+        print("  write 20 5")
+        print("Type 'done' when finished.\n")
+
+        sequence = []
+
+        while True:
+            line = input("> ").strip().lower()
+
+            if line == "done":
+                break
+
+            parts = line.split()
+
+            if len(parts) == 0:
+                continue
+
+            op = parts[0]
+
+            if op == "read":
+                if len(parts) != 2 or not parts[1].isdigit():
+                    print(RED + "Format: read <address>" + RESET)
+                    continue
+                sequence.append(("read", int(parts[1])))
+
+            elif op == "write":
+                if len(parts) != 3 or not parts[1].isdigit() or not parts[2].isdigit():
+                    print(RED + "Format: write <address> <value>" + RESET)
+                    continue
+                sequence.append(("write", int(parts[1]), int(parts[2])))
+
+            else:
+                print(RED + "Unknown command. Use read or write." + RESET)
+
+        return sequence
+
     # ----------------------------------------
     # Return validated configuration
     # ----------------------------------------
@@ -115,4 +155,5 @@ def get_custom_configuration():
         "mapping": mapping,
         "replacement": replacement,
         "write": write,
+        "sequence": get_custom_sequence()
     }

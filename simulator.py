@@ -32,7 +32,7 @@ TEST_SEQUENCE = [
 # =========================================================
 # Helper: Run a single demonstration with given parameters
 # =========================================================
-def run_demo(name, mem_size, cache_size, block_size, mapping, replacement, write):
+def run_demo(name, mem_size, cache_size, block_size, mapping, replacement, write, sequence=None):
     print(f"\n{BOLD}=== Running Demo: {name} ==={RESET}")
     print(f"{CYAN}Configuration:{RESET}")
     print(f"  Memory size:   {mem_size}")
@@ -66,7 +66,8 @@ def run_demo(name, mem_size, cache_size, block_size, mapping, replacement, write
     )
 
     # Execute test sequence
-    for step in TEST_SEQUENCE:
+    steps = sequence if sequence else TEST_SEQUENCE
+    for step in steps:
         op = step[0]
 
         if op == "read":
@@ -127,7 +128,7 @@ def main():
         print("5. Custom Configuration")
         print("6. Quit")
 
-        choice = input("\nEnter choice (1–5): ").strip()
+        choice = input("\nEnter choice (1–6): ").strip()
 
         if choice == "1":
             run_demo(
@@ -185,6 +186,7 @@ def main():
                 mapping=config["mapping"],
                 replacement=config["replacement"],
                 write=config["write"],
+                sequence=config["sequence"]
             )
 
         elif choice == "6":
