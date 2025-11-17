@@ -1,15 +1,17 @@
 from cache import Cache
 from mainMem import Memory
+from custom_config import get_custom_configuration
 
 # =========================================================
 # ANSI COLOR CODES
+# This is used to color terminal output for better readability
 # =========================================================
 RED     = "\033[91m"
 GREEN   = "\033[92m"
 YELLOW  = "\033[93m"
 CYAN    = "\033[96m"
 BOLD    = "\033[1m"
-RESET   = "\033[0m"
+RESET   = "\033[0m" # this makes the terminal colors normal again
 
 # =========================================================
 # Predefined Test Sequence (Used by all demos)
@@ -122,7 +124,8 @@ def main():
         print("2. FIFO | Fully Associative | WB")
         print("3. LRU  | 2-Way Set-Assoc   | WT")
         print("4. RAND | Direct-Mapped     | WB")
-        print("5. Quit")
+        print("5. Custom Configuration")
+        print("6. Quit")
 
         choice = input("\nEnter choice (1–5): ").strip()
 
@@ -169,8 +172,22 @@ def main():
                 replacement="RAND",
                 write="WB",
             )
-
         elif choice == "5":
+            config = get_custom_configuration()
+            if config is None:
+                continue  # validation failed; restart menu
+
+            run_demo(
+                "Custom Configuration",
+                mem_size=config["mem_size"],
+                cache_size=config["cache_size"],
+                block_size=config["block_size"],
+                mapping=config["mapping"],
+                replacement=config["replacement"],
+                write=config["write"],
+            )
+
+        elif choice == "6":
             print("Exiting.")
             break
 
