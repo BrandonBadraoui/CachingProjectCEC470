@@ -194,11 +194,10 @@ def main():
             break
 
         else:
-            print("Invalid choice. Please enter 1–5.")
+            print("Invalid choice. Please enter 1–6.")
 
 
-# =========================================================
+
 # Entry Point
-# =========================================================
 if __name__ == "__main__":
     main()

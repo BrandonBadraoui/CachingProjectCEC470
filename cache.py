@@ -106,8 +106,27 @@ class Cache:
             return
 
         if self.write_policy == "WT":
-            # For write-through, write directly to memory even on miss
+            # Write-through WITH write-allocate on miss:
+            # 1) Load the block into cache
+            # 2) Update both cache and memory
+            block_data = memory.read_block(block_num, self.block_size)
+
+            # Choose a victim to replace
+            victim = self.choose_victim(self.sets[set_index])
+
+            # (Only relevant for WB, but kept consistent)
+            if victim.dirty and self.write_policy == "WB":
+                memory.write_block(victim.tag * self.num_sets + set_index, victim.data)
+
+            # Load new block into cache
+            victim.load_block(tag, block_data)
+            # Apply the write
+            victim.data[offset] = value
+            # Write-through to memory
             memory.write_byte(address, value)
+            victim.last_used = time.time()
+            return
+
         else:
             # For write-back, we need to load the block first
             block_data = memory.read_block(block_num, self.block_size)
